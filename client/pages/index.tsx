@@ -128,22 +128,7 @@ const MerkleTreePage: any = ({ initialData }:any) => {
           Generate Merkle Tree
         </button>
 
-        {progress > 0 && (
-          <p className="text-sm text-gray-600 mt-4">Process: {progress}%</p>
-        )}
-
-        {outputData && (
-          <div className="mt-6">
-            <p className="text-lg text-gray-800 mb-4">Root Hash: {outputData.rootHash}</p>
-
-            <button
-              onClick={handleDownloadClick}
-              className="bg-blue-500 text-white px-4 py-2 text-lg rounded-md cursor-pointer"
-            >
-              Download Proof
-            </button>
-          </div>
-        )}
+        
 
         <div className="mt-6 border border-gray-300 p-4 rounded-md">
           <h2 className="text-lg text-gray-800 mb-4">Example Data Format</h2>
