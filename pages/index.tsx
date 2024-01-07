@@ -1,28 +1,17 @@
 // pages/index.tsx
 
 import { useState ,useEffect} from 'react';
-import { generateMerkleTreeServerSide } from '@/utils/merkle';
 import Swal from 'sweetalert2';
-interface Proof {
-  address: string;
-  proof: string[];
-  token: string;
-}
+import axios from 'axios'
+import { useRouter } from 'next/router';
 
-interface OutputData {
-  rootHash: string;
-  proofs: Proof[];
-}
 
-interface Props {
-  initialData: OutputData | null;
-}
 
-const MerkleTreePage: React.FC<Props> = ({ initialData }) => {
+const MerkleTreePage: any = ({ initialData }:any) => {
   
-  
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
-  const [outputData, setOutputData]:any = useState<OutputData | null>(initialData);
+  const [outputData, setOutputData]:any = useState<any | null>(initialData);
   const [progress, setProgress] = useState<number>(0);
 
   
@@ -39,24 +28,39 @@ const MerkleTreePage: React.FC<Props> = ({ initialData }) => {
         console.error('Please upload a file.');
         return;
       }
-
+  
       const fileContent = await readFileContent(file);
       const jsonData = JSON.parse(fileContent);
-
-      console.log(progress);
-
-      const newData = await generateMerkleTreeServerSide(jsonData, (percent) => {
-        const currentPercent = percent;
-        console.log('Progress ', currentPercent);
   
-        setProgress(currentPercent);
+      const formData = new FormData();
+      formData.append('jsonFile', new Blob([JSON.stringify(jsonData)], { type: 'application/json' }));
+  
+      const response = await axios.post('http://localhost:3000/merkleRoot', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
+  
+      console.log('Server Response:', response.data);
+      
+      let {id} = response.data
+  
+      if(id){
+      await  Swal.fire("Request has been received...");
+        router.push('/process?processId='+id)
+      }else{
+        Swal.fire({
+          title: "The Internet?",
+          text: "Error",
+          icon: "error"
+        });
+      }
 
-      setOutputData(newData);
     } catch (err) {
       console.error(err);
     }
   };
+  
 
   const readFileContent = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -73,6 +77,7 @@ const MerkleTreePage: React.FC<Props> = ({ initialData }) => {
       reader.readAsText(file);
     });
   };
+
 
   const handleDownloadClick = () => {
     if (outputData) {
@@ -127,7 +132,7 @@ const MerkleTreePage: React.FC<Props> = ({ initialData }) => {
           <p className="text-sm text-gray-600 mt-4">Process: {progress}%</p>
         )}
 
-        {outputData.rootHash != '0x' && (
+        {outputData && (
           <div className="mt-6">
             <p className="text-lg text-gray-800 mb-4">Root Hash: {outputData.rootHash}</p>
 
@@ -149,15 +154,5 @@ const MerkleTreePage: React.FC<Props> = ({ initialData }) => {
     </div>
   );
 };
-
-export async function getStaticProps() {
-  const initialData = await generateMerkleTreeServerSide([], (progress) => console.log(`Progress: ${progress}%`));
-
-  return {
-    props: {
-      initialData,
-    },
-  };
-}
 
 export default MerkleTreePage;
